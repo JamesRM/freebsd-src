@@ -112,9 +112,9 @@ static void
 devemu_vtrnd_notify(void *vsc, struct vqueue_info *vq)
 {
 	struct iovec iov;
-	struct pci_vtrnd_softc *sc;
-	struct vi_req req;
+	struct devemu_vtrnd_softc *sc;
 	int len;
+	uint16_t idx;
 
 	sc = vsc;
 
@@ -124,7 +124,7 @@ devemu_vtrnd_notify(void *vsc, struct vqueue_info *vq)
 	}
 
 	while (vq_has_descs(vq)) {
-		vq_getchain(vq, &iov, 1, &req);
+		vq_getchain(vq, &idx, &iov, 1, NULL);
 
 		len = read(sc->vrsc_fd, iov.iov_base, iov.iov_len);
 
@@ -136,14 +136,14 @@ devemu_vtrnd_notify(void *vsc, struct vqueue_info *vq)
 		/*
 		 * Release this chain and handle more
 		 */
-		vq_relchain(vq, req.idx, len);
+		vq_relchain(vq, idx, len);
 	}
 	vq_endchains(vq, 1);	/* Generate interrupt if appropriate. */
 }
 
 
 static int
-pci_vtrnd_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
+devemu_vtrnd_init(struct vmctx *ctx, struct devemu_inst *di, char *opts)
 {
 	struct devemu_vtrnd_softc *sc;
 	int fd;
@@ -187,11 +187,7 @@ pci_vtrnd_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
 	sc->vrsc_fd = fd;
 
 	/* initialize config space */
-	pci_set_cfgdata16(pi, PCIR_DEVICE, VIRTIO_DEV_RANDOM);
-	pci_set_cfgdata16(pi, PCIR_VENDOR, VIRTIO_VENDOR);
-	pci_set_cfgdata8(pi, PCIR_CLASS, PCIC_CRYPTO);
-	pci_set_cfgdata16(pi, PCIR_SUBDEV_0, VIRTIO_ID_ENTROPY);
-	pci_set_cfgdata16(pi, PCIR_SUBVEND_0, VIRTIO_VENDOR);
+	vi_devemu_init(di, VIRTIO_TYPE_ENTROPY);
 
 	if (vi_intr_init(&sc->vrsc_vs, 1, fbsdrun_virtio_msix()))
 		return (1);

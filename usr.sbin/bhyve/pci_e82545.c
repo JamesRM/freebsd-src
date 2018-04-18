@@ -67,7 +67,7 @@ __FBSDID("$FreeBSD$");
 #include "bhyverun.h"
 #include "config.h"
 #include "debug.h"
-#include "pci_emul.h"
+#include "devemu.h"
 #include "mevent.h"
 #include "net_utils.h"
 #include "net_backends.h"

@@ -87,7 +87,7 @@ static int iofd = -1;
 static int memfd = -1;
 
 struct passthru_softc {
-	struct pci_devinst *psc_pi;
+	struct devemu_inst *psc_pi;
 	struct pcibar psc_bar[PCI_BARMAX + 1];
 	struct {
 		int		capoff;

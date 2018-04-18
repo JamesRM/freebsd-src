@@ -34,7 +34,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
-#include <sys/nv.h>
 #include <sys/_pthreadtypes.h>
 
 #include <dev/pci/pcireg.h>
@@ -52,10 +51,8 @@ struct devemu_dev {
 	char      *de_emu;		/* Name of device emulation */
 
 	/* instance creation */
-	int       (*pe_init)(struct vmctx *, struct pci_devinst *,
-			     nvlist_t *);
-	int	(*pe_legacy_config)(nvlist_t *, const char *);
-	const char *pe_alias;
+	int       (*de_init)(struct vmctx *, struct devemu_inst *,
+			     char *opts);
 
 	/* ACPI DSDT enumeration */
 	void	(*de_write_dsdt)(struct devemu_inst *);
@@ -76,14 +73,10 @@ struct devemu_dev {
 				struct pci_devinst *pi, int baridx,
 				uint64_t offset, int size);
 
-	void	(*pe_baraddr)(struct vmctx *ctx, struct pci_devinst *pi,
-			      int baridx, int enabled, uint64_t address);
-
 	/* Save/restore device state */
 	int	(*pe_snapshot)(struct vm_snapshot_meta *meta);
 	int	(*pe_pause)(struct vmctx *ctx, struct pci_devinst *pi);
 	int	(*pe_resume)(struct vmctx *ctx, struct pci_devinst *pi);
-
 };
 #define devemu_SET(x)   DATA_SET(devemu_set, x);
 
@@ -243,7 +236,6 @@ int	pci_msix_enabled(struct pci_devinst *pi);
 int	pci_msix_table_bar(struct pci_devinst *pi);
 int	pci_msix_pba_bar(struct pci_devinst *pi);
 int	pci_msi_maxmsgnum(struct pci_devinst *pi);
-int	pci_parse_legacy_config(nvlist_t *nvl, const char *opt);
 int	pci_parse_slot(char *opt);
 void    pci_print_supported_devices();
 void	pci_populate_msicap(struct msicap *cap, int msgs, int nextptr);

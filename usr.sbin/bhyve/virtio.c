@@ -46,8 +46,8 @@ __FBSDID("$FreeBSD$");
 
 #include "bhyverun.h"
 #include "debug.h"
-#include "pci_emul.h"
-#include "virtio.h"
+#include "devemu.h"
+#include "devemu_virtio.h"
 
 /*
  * Functions for dealing with generalized "virtual devices" as
@@ -67,7 +67,7 @@ __FBSDID("$FreeBSD$");
  */
 void
 vi_softc_linkup(struct virtio_softc *vs, struct virtio_consts *vc,
-		void *dev_softc, struct pci_devinst *pi,
+		void *dev_softc, struct devemu_devinst *di,
 		struct vqueue_info *queues)
 {
 	int i;
@@ -75,8 +75,8 @@ vi_softc_linkup(struct virtio_softc *vs, struct virtio_consts *vc,
 	/* vs and dev_softc addresses must match */
 	assert((void *)vs == dev_softc);
 	vs->vs_vc = vc;
-	vs->vs_pi = pi;
-	pi->pi_arg = vs;
+	vs->vs_di = di;
+	di->di_arg = vs;
 
 	vs->vs_queues = queues;
 	for (i = 0; i < vc->vc_nvq; i++) {
@@ -116,7 +116,7 @@ vi_reset_dev(struct virtio_softc *vs)
 	vs->vs_curq = 0;
 	/* vs->vs_status = 0; -- redundant */
 	if (vs->vs_isr)
-		pci_lintr_deassert(vs->vs_pi);
+		devemu_lintr_deassert(vs->vs_di);
 	vs->vs_isr = 0;
 	vs->vs_msix_cfg_idx = VIRTIO_MSI_NO_VECTOR;
 }
@@ -125,7 +125,7 @@ vi_reset_dev(struct virtio_softc *vs)
  * Set I/O BAR (usually 0) to map PCI config registers.
  */
 void
-vi_set_io_bar(struct virtio_softc *vs, int barnum)
+vi_set_io_res(struct virtio_softc *vs, int barnum)
 {
 	size_t size;
 
@@ -155,16 +155,16 @@ vi_intr_init(struct virtio_softc *vs, int barnum, int use_msix)
 		vi_reset_dev(vs); /* set all vectors to NO_VECTOR */
 		VS_UNLOCK(vs);
 		nvec = vs->vs_vc->vc_nvq + 1;
-		if (pci_emul_add_msixcap(vs->vs_pi, nvec, barnum))
+		if (pci_emul_add_msixcap(vs->vs_di, nvec, barnum))
 			return (1);
 	} else
 		vs->vs_flags &= ~VIRTIO_USE_MSIX;
 
 	/* Only 1 MSI vector for bhyve */
-	pci_emul_add_msicap(vs->vs_pi, 1);
+	pci_emul_add_msicap(vs->vs_di, 1);
 
 	/* Legacy interrupts are mandatory for virtio devices */
-	pci_lintr_request(vs->vs_pi);
+	devemu_lintr_request(vs->vs_di);
 
 	return (0);
 }
@@ -244,8 +244,8 @@ _vq_record(int i, volatile struct vring_desc *vd,
  *
  * Basically, this vets the "flags" and "next" field of each
  * descriptor and tells you how many are involved.  Since some may
- * be indirect, this also needs the vmctx (in the pci_devinst
- * at vs->vs_pi) so that it can find indirect descriptors.
+ * be indirect, this also needs the vmctx (in the devemu_inst
+ * at vs->vs_di) so that it can find indirect descriptors.
  *
  * As we process each descriptor, we copy and adjust it (guest to
  * host address wise, also using the vmtctx) into the given iov[]
@@ -559,10 +559,10 @@ vi_find_cr(int offset) {
  * Otherwise dispatch to the actual driver.
  */
 uint64_t
-vi_pci_read(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
-	    int baridx, uint64_t offset, int size)
+vi_devemu_read(struct vmctx *ctx, int vcpu, struct devemu_inst *di,
+	    int baridx, uint64_t offset, size_t size)
 {
-	struct virtio_softc *vs = pi->pi_arg;
+	struct virtio_softc *vs = di->di_arg;
 	struct virtio_consts *vc;
 	struct config_reg *cr;
 	uint64_t virtio_config_size, max;
@@ -572,9 +572,9 @@ vi_pci_read(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
 	int error;
 
 	if (vs->vs_flags & VIRTIO_USE_MSIX) {
-		if (baridx == pci_msix_table_bar(pi) ||
-		    baridx == pci_msix_pba_bar(pi)) {
-			return (pci_emul_msix_tread(pi, offset, size));
+		if (baridx == pci_msix_table_bar(di) ||
+		    baridx == pci_msix_pba_bar(di)) {
+			return (pci_emul_msix_tread(di, offset, size));
 		}
 	}
 
@@ -652,7 +652,7 @@ bad:
 		value = vs->vs_isr;
 		vs->vs_isr = 0;		/* a read clears this flag */
 		if (value)
-			pci_lintr_deassert(pi);
+			devemu_lintr_deassert(di);
 		break;
 	case VIRTIO_MSI_CONFIG_VECTOR:
 		value = vs->vs_msix_cfg_idx;
@@ -676,10 +676,10 @@ done:
  * Otherwise dispatch to the actual driver.
  */
 void
-vi_pci_write(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
-	     int baridx, uint64_t offset, int size, uint64_t value)
+vi_devemu_write(struct vmctx *ctx, int vcpu, struct devemu_inst *di,
+		int baridx, uint64_t offset, size_t size, uint64_t value)
 {
-	struct virtio_softc *vs = pi->pi_arg;
+	struct virtio_softc *vs = di->di_arg;
 	struct vqueue_info *vq;
 	struct virtio_consts *vc;
 	struct config_reg *cr;
@@ -689,9 +689,9 @@ vi_pci_write(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
 	int error;
 
 	if (vs->vs_flags & VIRTIO_USE_MSIX) {
-		if (baridx == pci_msix_table_bar(pi) ||
-		    baridx == pci_msix_pba_bar(pi)) {
-			pci_emul_msix_twrite(pi, offset, size, value);
+		if (baridx == pci_msix_table_bar(di) ||
+		    baridx == pci_msix_pba_bar(di)) {
+			pci_emul_msix_twrite(di, offset, size, value);
 			return;
 		}
 	}
