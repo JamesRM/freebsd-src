@@ -45,7 +45,6 @@ __FBSDID("$FreeBSD$");
 #include "acpi.h"
 #include "debug.h"
 #include "bootrom.h"
-#include "config.h"
 #include "inout.h"
 #include "devemu.h"
 #include "devemu_irq.h"
@@ -69,21 +68,20 @@ SYSRES_IO(NMISC_PORT, 1);
 
 static struct devemu_inst *lpc_bridge;
 
-#define	LPC_UART_NUM	4
+static const char *romfile;
+
+#define	LPC_UART_NUM	2
 static struct lpc_uart_softc {
 	struct uart_softc *uart_softc;
+	const char *opts;
 	int	iobase;
 	int	irq;
 	int	enabled;
 } lpc_uart_softc[LPC_UART_NUM];
 
-static const char *lpc_uart_names[LPC_UART_NUM] = {
-	"com1", "com2", "com3", "com4"
-};
+static const char *lpc_uart_names[LPC_UART_NUM] = { "COM1", "COM2" };
 
-static const char *lpc_uart_acpi_names[LPC_UART_NUM] = {
-	"COM1", "COM2", "COM3", "COM4"
-};
+static bool pctestdev_present;
 
 /*
  * LPC device configuration is in the following form:
@@ -94,38 +92,41 @@ int
 lpc_device_parse(const char *opts)
 {
 	int unit, error;
-	char *str, *cpy, *lpcdev, *node_name;
+	char *str, *cpy, *lpcdev;
 
 	error = -1;
 	str = cpy = strdup(opts);
 	lpcdev = strsep(&str, ",");
 	if (lpcdev != NULL) {
 		if (strcasecmp(lpcdev, "bootrom") == 0) {
-			set_config_value("lpc.bootrom", str);
+			romfile = str;
 			error = 0;
 			goto done;
 		}
 		for (unit = 0; unit < LPC_UART_NUM; unit++) {
 			if (strcasecmp(lpcdev, lpc_uart_names[unit]) == 0) {
-				asprintf(&node_name, "lpc.%s.path",
-				    lpc_uart_names[unit]);
-				set_config_value(node_name, str);
-				free(node_name);
+				lpc_uart_softc[unit].opts = str;
 				error = 0;
 				goto done;
 			}
 		}
 		if (strcasecmp(lpcdev, pctestdev_getname()) == 0) {
-			asprintf(&node_name, "lpc.%s", pctestdev_getname());
-			set_config_bool(node_name, true);
-			free(node_name);
-			error = 0;
-			goto done;
+			if (pctestdev_present) {
+				EPRINTLN("More than one %s device conf is "
+				    "specified; only one is allowed.",
+				    pctestdev_getname());
+			} else if (pctestdev_parse(str) == 0) {
+				pctestdev_present = true;
+				error = 0;
+				free(cpy);
+				goto done;
+			}
 		}
 	}
 
 done:
-	free(cpy);
+	if (error)
+		free(cpy);
 
 	return (error);
 }
@@ -145,7 +146,7 @@ const char *
 lpc_bootrom(void)
 {
 
-	return (get_config_value("lpc.bootrom"));
+	return (romfile);
 }
 
 static void
@@ -204,11 +205,9 @@ lpc_init(struct vmctx *ctx)
 {
 	struct lpc_uart_softc *sc;
 	struct inout_port iop;
-	const char *backend, *name, *romfile;
-	char *node_name;
+	const char *name;
 	int unit, error;
 
-	romfile = get_config_value("lpc.bootrom");
 	if (romfile != NULL) {
 		error = bootrom_loadrom(ctx, romfile);
 		if (error)
@@ -230,12 +229,9 @@ lpc_init(struct vmctx *ctx)
 		sc->uart_softc = uart_init(lpc_uart_intr_assert,
 				    lpc_uart_intr_deassert, sc);
 
-		asprintf(&node_name, "lpc.%s.path", name);
-		backend = get_config_value(node_name);
-		free(node_name);
-		if (uart_set_backend(sc->uart_softc, backend) != 0) {
+		if (uart_set_backend(sc->uart_softc, sc->opts) != 0) {
 			EPRINTLN("Unable to initialize backend '%s' "
-			    "for LPC device %s", backend, name);
+			    "for LPC device %s", sc->opts, name);
 			return (-1);
 		}
 
@@ -253,13 +249,11 @@ lpc_init(struct vmctx *ctx)
 	}
 
 	/* pc-testdev */
-	asprintf(&node_name, "lpc.%s", pctestdev_getname());
-	if (get_config_bool_default(node_name, false)) {
+	if (pctestdev_present) {
 		error = pctestdev_init(ctx);
 		if (error)
 			return (error);
 	}
-	free(node_name);
 
 	return (0);
 }
@@ -368,7 +362,7 @@ pci_lpc_uart_dsdt(void)
 		if (!sc->enabled)
 			continue;
 		dsdt_line("");
-		dsdt_line("Device (%s)", lpc_uart_acpi_names[unit]);
+		dsdt_line("Device (%s)", lpc_uart_names[unit]);
 		dsdt_line("{");
 		dsdt_line("  Name (_HID, EisaId (\"PNP0501\"))");
 		dsdt_line("  Name (_UID, %d)", unit + 1);
@@ -422,7 +416,7 @@ pci_lpc_read(struct vmctx *ctx, int vcpu, struct devemu_inst *di,
 #define	LPC_VENDOR	0x8086
 
 static int
-pci_lpc_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
+pci_lpc_init(struct vmctx *ctx, struct devemu_inst *di, char *opts)
 {
 
 	/*

@@ -59,7 +59,7 @@ pci_hostbridge_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
 	pci_set_cfgdata8(pi, PCIR_CLASS, PCIC_BRIDGE);
 	pci_set_cfgdata8(pi, PCIR_SUBCLASS, PCIS_BRIDGE_HOST);
 
-	pci_emul_add_pciecap(pi, PCIEM_TYPE_ROOT_PORT);
+	pci_emul_add_pciecap(di, PCIEM_TYPE_ROOT_PORT);
 
 	return (0);
 }
@@ -79,10 +79,10 @@ struct pci_devemu pci_de_amd_hostbridge = {
 	.pe_legacy_config = pci_amd_hostbridge_legacy_config,
 	.pe_alias = "hostbridge",
 };
-PCI_EMUL_SET(pci_de_amd_hostbridge);
+DEVEMU_SET(pci_de_amd_hostbridge);
 
-struct pci_devemu pci_de_hostbridge = {
-	.pe_emu = "hostbridge",
-	.pe_init = pci_hostbridge_init,
+struct devemu_dev pci_de_hostbridge = {
+	.de_emu = "hostbridge",
+	.de_init = pci_hostbridge_init,
 };
-PCI_EMUL_SET(pci_de_hostbridge);
+DEVEMU_SET(pci_de_hostbridge);
