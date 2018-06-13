@@ -3,7 +3,6 @@
  *
  * ARMv8 Foundation model DTS (GICv3 configuration)
  */
-
 /dts-v1/;
 
 / {
