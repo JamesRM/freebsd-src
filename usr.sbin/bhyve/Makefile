@@ -75,10 +75,6 @@ SRCS=	\
 	spinup_ap.c		\
 	iov.c			\
 	block_if.c		\
-	devemu_virtio_block.c	\
-	devemu_virtio_console.c	\
-	devemu_virtio_net.c	\
-	devemu_virtio_rnd.c	\
 	mevent.c		\
 	sockstream.c
 
