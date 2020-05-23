@@ -57,7 +57,7 @@ __FBSDID("$FreeBSD$");
 #include "config.h"
 #include "debug.h"
 #include "pci/pci_emul.h"
-#include "virtio.h"
+#include "../amd64/virtio.h"
 #include "block_if.h"
 
 #define	VTBLK_BSIZE	512
