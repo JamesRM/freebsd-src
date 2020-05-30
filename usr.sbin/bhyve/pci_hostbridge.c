@@ -79,10 +79,10 @@ struct pci_devemu pci_de_amd_hostbridge = {
 	.pe_legacy_config = pci_amd_hostbridge_legacy_config,
 	.pe_alias = "hostbridge",
 };
-DEVEMU_SET(pci_de_amd_hostbridge);
+PCI_EMUL_SET(pci_de_amd_hostbridge);
 
-struct devemu_dev pci_de_hostbridge = {
-	.de_emu = "hostbridge",
-	.de_init = pci_hostbridge_init,
+struct pci_devemu pci_de_hostbridge = {
+	.pe_emu = "hostbridge",
+	.pe_init = pci_hostbridge_init,
 };
-DEVEMU_SET(pci_de_hostbridge);
+PCI_EMUL_SET(pci_de_hostbridge);
