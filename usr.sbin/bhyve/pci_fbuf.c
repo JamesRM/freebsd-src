@@ -125,7 +125,7 @@ pci_fbuf_write(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
 
 	assert(baridx == 0);
 
-	sc = di->di_arg;
+	sc = di->pi_arg;
 
 	DPRINTF(DEBUG_VERBOSE,
 	    ("fbuf wr: offset 0x%lx, size: %d, value: 0x%lx",
@@ -180,7 +180,7 @@ pci_fbuf_read(struct vmctx *ctx, int vcpu, struct pci_devinst *di,
 
 	assert(baridx == 0);
 
-	sc = di->di_arg;
+	sc = di->pi_arg;
 
 
 	if (offset + size > DMEMSZ) {
@@ -385,7 +385,7 @@ pci_fbuf_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
 
 	sc = calloc(1, sizeof(struct pci_fbuf_softc));
 
-	di->di_arg = sc;
+	di->pi_arg = sc;
 
 	/* initialize config space */
 	pci_set_cfgdata16(di, PCIR_DEVICE, 0x40FB);
@@ -402,7 +402,7 @@ pci_fbuf_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
 	error = pci_emul_add_msicap(di, PCI_FBUF_MSI_MSGS);
 	assert(error == 0);
 
-	sc->fbaddr = di->di_bar[1].addr;
+	sc->fbaddr = di->pi_bar[1].addr;
 	sc->memregs.fbsize = FB_SIZE;
 	sc->memregs.width  = COLS_DEFAULT;
 	sc->memregs.height = ROWS_DEFAULT;
