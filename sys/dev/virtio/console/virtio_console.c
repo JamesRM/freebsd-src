@@ -265,8 +265,6 @@ static devclass_t vtcon_devclass;
 
 VIRTIO_DRIVER_MODULE(virtio_console, vtcon_driver, vtcon_devclass,
     vtcon_modevent, 0);
-DRIVER_MODULE(virtio_console, virtio_mmio, vtcon_driver, vtcon_devclass,
-    vtcon_modevent, 0);
 MODULE_VERSION(virtio_console, 1);
 MODULE_DEPEND(virtio_console, virtio, 1, 1, 1);
 
