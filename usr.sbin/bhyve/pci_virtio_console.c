@@ -63,7 +63,7 @@ __FBSDID("$FreeBSD$");
 #include "config.h"
 #include "debug.h"
 #include "pci_emul.h"
-#include "pci_virtio.h"
+#include "virtio.h"
 #include "mevent.h"
 #include "sockstream.h"
 

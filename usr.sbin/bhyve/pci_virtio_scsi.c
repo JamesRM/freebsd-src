@@ -64,7 +64,7 @@ __FBSDID("$FreeBSD$");
 #include "config.h"
 #include "debug.h"
 #include "pci_emul.h"
-#include "pci_virtio.h"
+#include "virtio.h"
 #include "iov.h"
 
 #define VTSCSI_RINGSZ		64
