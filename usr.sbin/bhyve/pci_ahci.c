@@ -65,6 +65,8 @@ __FBSDID("$FreeBSD$");
 #include "block_if.h"
 #include "bhyverun.h"
 #include "pci_emul.h"
+#include "ahci.h"
+#include "block_if.h"
 
 #define	DEF_PORTS	6	/* Intel ICH8 AHCI supports 6 ports */
 #define	MAX_PORTS	32	/* AHCI supports 32 ports */

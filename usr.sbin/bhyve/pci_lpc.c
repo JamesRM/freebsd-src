@@ -265,14 +265,14 @@ lpc_init(struct vmctx *ctx)
 }
 
 static void
-pci_lpc_write_dsdt(struct pci_devinst *di)
+pci_lpc_write_dsdt(struct pci_devinst *pi)
 {
 	struct lpc_dsdt **ldpp, *ldp;
 
 	dsdt_line("");
 	dsdt_line("Device (ISA)");
 	dsdt_line("{");
-	dsdt_line("  Name (_ADR, 0x%04X%04X)", di->pi_slot, di->pi_func);
+	dsdt_line("  Name (_ADR, 0x%04X%04X)", pi->pi_slot, pi->pi_func);
 	dsdt_line("  OperationRegion (LPCR, PCI_Config, 0x00, 0x100)");
 	dsdt_line("  Field (LPCR, AnyAcc, NoLock, Preserve)");
 	dsdt_line("  {");
@@ -385,7 +385,7 @@ pci_lpc_uart_dsdt(void)
 LPC_DSDT(pci_lpc_uart_dsdt);
 
 static int
-pci_lpc_cfgwrite(struct vmctx *ctx, int vcpu, struct pci_devinst *di,
+pci_lpc_cfgwrite(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
 		  int coff, int bytes, uint32_t val)
 {
 	int pirq_pin;
@@ -398,7 +398,7 @@ pci_lpc_cfgwrite(struct vmctx *ctx, int vcpu, struct pci_devinst *di,
 			pirq_pin = coff - 0x68 + 5;
 		if (pirq_pin != 0) {
 			pirq_write(ctx, pirq_pin, val);
-			pci_set_cfgdata8(di, coff, pirq_read(pirq_pin));
+			pci_set_cfgdata8(pi, coff, pirq_read(pirq_pin));
 			return (0);
 		}
 	}
@@ -406,13 +406,13 @@ pci_lpc_cfgwrite(struct vmctx *ctx, int vcpu, struct pci_devinst *di,
 }
 
 static void
-pci_lpc_write(struct vmctx *ctx, int vcpu, struct pci_devinst *di,
+pci_lpc_write(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
 	       int baridx, uint64_t offset, int size, uint64_t value)
 {
 }
 
 static uint64_t
-pci_lpc_read(struct vmctx *ctx, int vcpu, struct pci_devinst *di,
+pci_lpc_read(struct vmctx *ctx, int vcpu, struct pci_devinst *pi,
 	      int baridx, uint64_t offset, int size)
 {
 	return (0);
@@ -438,7 +438,7 @@ pci_lpc_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
 	 * simplifies the ACPI DSDT because it can provide a decode for
 	 * all legacy i/o ports behind bus 0.
 	 */
-	if (di->pi_bus != 0) {
+	if (pi->pi_bus != 0) {
 		EPRINTLN("LPC bridge can be present only on bus 0.");
 		return (-1);
 	}
@@ -447,12 +447,12 @@ pci_lpc_init(struct vmctx *ctx, struct pci_devinst *pi, nvlist_t *nvl)
 		return (-1);
 
 	/* initialize config space */
-	pci_set_cfgdata16(di, PCIR_DEVICE, LPC_DEV);
-	pci_set_cfgdata16(di, PCIR_VENDOR, LPC_VENDOR);
-	pci_set_cfgdata8(di, PCIR_CLASS, PCIC_BRIDGE);
-	pci_set_cfgdata8(di, PCIR_SUBCLASS, PCIS_BRIDGE_ISA);
+	pci_set_cfgdata16(pi, PCIR_DEVICE, LPC_DEV);
+	pci_set_cfgdata16(pi, PCIR_VENDOR, LPC_VENDOR);
+	pci_set_cfgdata8(pi, PCIR_CLASS, PCIC_BRIDGE);
+	pci_set_cfgdata8(pi, PCIR_SUBCLASS, PCIS_BRIDGE_ISA);
 
-	lpc_bridge = di;
+	lpc_bridge = pi;
 
 	return (0);
 }
