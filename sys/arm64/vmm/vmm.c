@@ -184,6 +184,7 @@ vcpu_init(struct vm *vm, uint32_t vcpu_id, bool create)
 	if (create) {
 		KASSERT(!vcpu_lock_initialized(vcpu), ("vcou %d already "
 		    "initialized", vcpu_id));
+		printf("vmm: create vcpu %d\n", vcpu_id);
 		vcpu_lock_init(vcpu);
 		vcpu->hostcpu = NOCPU;
 		vcpu->vcpuid = vcpu_id;
@@ -274,10 +275,9 @@ vm_create(const char *name, struct vm **retvm)
 	vm->maxcpus = VM_MAXCPU;
 	vm->cookie = VMINIT(vm);
 
+	CPU_ZERO(&vm->active_cpus);
 	for (i = 0; i < vm->maxcpus; i++)
 		vcpu_init(vm, i, true);
-
-	vm_activate_cpu(vm, BSP);
 
 	*retvm = vm;
 	return (0);
@@ -367,6 +367,10 @@ vm_handle_reg_emul(struct vm *vm, int vcpuid, bool *retu)
 	case ISS_CNTP_TVAL_EL0:
 		rread = vtimer_phys_tval_read;
 		rwrite = vtimer_phys_tval_write;
+		break;
+	case ICC_SGI1R_EL1:
+		rread = vgic_v3_icc_sgi1r_el1_read;
+		rwrite = vgic_v3_icc_sgi1r_el1_write;
 		break;
 	default:
 		goto out_user;
