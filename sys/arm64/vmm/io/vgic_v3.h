@@ -65,6 +65,8 @@
 	ICC_SGI1R_EL1_CRn_MASK | ICC_SGI1R_EL1_CRm_MASK |	\
 	ICC_SGI1R_EL1_OP2_MASK)
 
+#define ICC_SGI1R_EL1_TargetList_Bits 16
+
 int vgic_v3_icc_sgi1r_el1_read(void *vm, int vcpuid, uint64_t *rval, void *arg);
 int vgic_v3_icc_sgi1r_el1_write(void *vm, int vcpuid, uint64_t rval, void *arg);
 

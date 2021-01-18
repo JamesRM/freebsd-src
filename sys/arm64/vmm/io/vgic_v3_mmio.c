@@ -356,6 +356,7 @@ dist_ipriorityr_write(void *vm, int vcpuid, uint64_t fault_ipa, uint64_t wval,
 	bool *retu = arg;
 	size_t n;
 
+
 	hyp = vm_get_cookie(vm);
 	dist = &hyp->vgic_dist;
 
@@ -992,12 +993,12 @@ vgic_v3_mmio_init(struct hyp *hyp)
 {
 	struct vgic_v3_dist *dist = &hyp->vgic_dist;
 	int redist_region_num, dist_region_num, region_num;
-	int ncpus = 1;
+	int ncpus = VM_MAXCPU;
 	int i;
 
 	dist_region_num = FIRST_REDIST_MMIO_REGION;
 	redist_region_num = \
-	    ncpus * (VGIC_MMIO_REGIONS_NUM - FIRST_REDIST_MMIO_REGION);
+	    (VGIC_MMIO_REGIONS_NUM - FIRST_REDIST_MMIO_REGION);
 	region_num = dist_region_num + redist_region_num;
 
 	hyp->vgic_mmio_regions = \
@@ -1008,7 +1009,7 @@ vgic_v3_mmio_init(struct hyp *hyp)
 	dist_mmio_init_regions(dist, hyp);
 
 	/* TODO: Do it for all VCPUs */
-	for (i = 0; i < VM_MAXCPU; i++)
+	for (i = 0; i < ncpus; i++)
 		redist_mmio_init_regions(hyp, i);
 }
 
@@ -1032,7 +1033,6 @@ vgic_v3_icc_sgi1r_el1_read(void *vm, int vcpuid, uint64_t *rval, void *arg)
 {
 	bool *retu = arg;
 
-	printf("\t%s  %lx\n", __func__, *rval);
 	retu = false;
 
 	return (0);
@@ -1053,16 +1053,12 @@ vgic_v3_icc_sgi1r_el1_write(void *vm, int vcpuid, uint64_t wval, void *arg)
 		intid = (wval >> ICC_SGI1R_EL1_SGIID_SHIFT) &
 		    ICC_SGI1R_EL1_SGIID_MASK;
 
-		vcpu = 0;
-		while (vcpu < 16) {
+		for (vcpu = 0; vcpu < ICC_SGI1R_EL1_TargetList_Bits; vcpu++) {
 			if (CPU_ISSET(vcpu, &active_cpus) && vcpu != vcpuid) {
 				vgic_v3_inject_irq(&hyp->ctx[vcpu], intid,
 				    VGIC_IRQ_MISC);
 			}
-			vcpu += 1;
 		}
-
-
 	} else {
 		/* TODO Interrupts routed to all PEs, excluding "self" */
 	}
