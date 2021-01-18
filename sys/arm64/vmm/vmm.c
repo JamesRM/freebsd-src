@@ -182,7 +182,7 @@ vcpu_init(struct vm *vm, uint32_t vcpu_id, bool create)
 	vcpu = &vm->vcpu[vcpu_id];
 
 	if (create) {
-		KASSERT(!vcpu_lock_initialized(vcpu), ("vcou %d already "
+		KASSERT(!vcpu_lock_initialized(vcpu), ("vcpu %d already "
 		    "initialized", vcpu_id));
 		printf("vmm: create vcpu %d\n", vcpu_id);
 		vcpu_lock_init(vcpu);
