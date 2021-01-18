@@ -41,6 +41,7 @@
 #include <pthread_np.h>
 #include <sysexits.h>
 #include <vmmapi.h>
+#include <dev/psci/psci.h>
 
 #include <machine/vmm.h>
 #include <machine/atomic.h>
@@ -300,9 +301,9 @@ vmexit_spinup_ap(struct vmctx *ctx, struct vm_exit *vmexit, int *pvcpu)
 	uint64_t ctx_id = vmexit->u.spinup_ap.ctx_id;
 
 	assert(newcpu != 0);
-	if (newcpu >= guest_ncpus) {
-	/*  -3 - PSCI_RETVAL_DENIED  */
-		error = vm_set_register(ctx, *pvcpu, VM_REG_GUEST_X0, -3);
+	if (guest_ncpus == 1 && newcpu >= guest_ncpus) {
+		error = vm_set_register(ctx, *pvcpu, VM_REG_GUEST_X0,
+			    PSCI_RETVAL_DENIED);
 		assert(error == 0);
 		goto out;
 	}
@@ -315,8 +316,8 @@ vmexit_spinup_ap(struct vmctx *ctx, struct vm_exit *vmexit, int *pvcpu)
 
 	fbsdrun_addcpu(ctx, BSP, newcpu, pc);
 
-	/*  0 - PSCI_RETVAL_SUCCESS  */
-	error = vm_set_register(ctx, *pvcpu, VM_REG_GUEST_X0, 0);
+	error = vm_set_register(ctx, *pvcpu, VM_REG_GUEST_X0,
+		    PSCI_RETVAL_SUCCESS);
 	assert(error == 0);
 
 out:
@@ -411,7 +412,7 @@ main(int argc, char *argv[])
 	progname = basename(argv[0]);
 	guest_ncpus = 1;
 
-	while ((c = getopt(argc, argv, "bhp:c:s:e:m:")) != -1) {
+	while ((c = getopt(argc, argv, "bhcp:s:e:m:")) != -1) {
 		switch (c) {
 		case 'b':
 			bvmcons = true;
@@ -426,7 +427,7 @@ main(int argc, char *argv[])
                         }
 			break;
                 case 'c':
-			guest_ncpus = atoi(optarg);
+			guest_ncpus = VM_MAXCPU;
 			break;
 		case 'm':
 			error = vm_parse_memsize(optarg, &mem_size);

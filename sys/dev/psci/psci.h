@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <dev/psci/smccc.h>
 
+#ifdef _KERNEL
 typedef int (*psci_initfn_t)(device_t dev, int default_version);
 typedef int (*psci_callfn_t)(register_t, register_t, register_t, register_t,
 	register_t, register_t, register_t, register_t,
@@ -52,6 +53,7 @@ psci_call(register_t a, register_t b, register_t c, register_t d)
 
 	return (psci_callfn(a, b, c, d, 0, 0, 0, 0, NULL));
 }
+#endif
 
 /*
  * PSCI return codes.
