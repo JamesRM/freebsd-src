@@ -69,7 +69,7 @@
 
 #define	RES0			0UL
 
-#define	IRQBUF_SIZE_MIN		32
+#define	IRQBUF_SIZE_MIN		64
 #define	IRQBUF_SIZE_MAX		(1 << 10)
 
 #define	IRQ_SCHEDULED		(GIC_LAST_SPI + 1)
