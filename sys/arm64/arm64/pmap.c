@@ -1285,8 +1285,6 @@ pmap_invalidate_page(pmap_t pmap, vm_offset_t va)
 {
 	uint64_t r;
 
-	PMAP_ASSERT_STAGE1(pmap);
-
 	dsb(ishst);
 	if (pmap == kernel_pmap) {
 		r = atop(va);
@@ -1303,8 +1301,6 @@ static __inline void
 pmap_invalidate_range(pmap_t pmap, vm_offset_t sva, vm_offset_t eva)
 {
 	uint64_t end, r, start;
-
-	PMAP_ASSERT_STAGE1(pmap);
 
 	dsb(ishst);
 	if (pmap == kernel_pmap) {
@@ -3226,12 +3222,15 @@ pmap_remove(pmap_t pmap, vm_offset_t sva, vm_offset_t eva)
 					va_next = eva;
 				continue;
 			}
+
+			l1 = pmap_l0_to_l1(l0, sva);
+		} else {
+			l1 = pmap_l1(pmap, sva);
 		}
 
 		va_next = (sva + L1_SIZE) & ~L1_OFFSET;
 		if (va_next < sva)
 			va_next = eva;
-		l1 = pmap_l0_to_l1(l0, sva);
 		if (pmap_load(l1) == 0)
 			continue;
 		if ((pmap_load(l1) & ATTR_DESCR_MASK) == L1_BLOCK) {
