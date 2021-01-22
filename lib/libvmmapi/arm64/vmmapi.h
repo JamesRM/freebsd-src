@@ -61,7 +61,7 @@ int	vm_get_capability(struct vmctx *ctx, int vcpu, enum vm_cap_type cap,
 			  int *retval);
 int	vm_set_capability(struct vmctx *ctx, int vcpu, enum vm_cap_type cap,
 			  int val);
-int	vm_assert_irq(struct vmctx *ctx, uint32_t irq);
+int	vm_assert_irq(struct vmctx *ctx, uint32_t irq, uint32_t vcpuid);
 int	vm_deassert_irq(struct vmctx *ctx, uint32_t irq);
 
 /*

@@ -165,7 +165,7 @@ vmmdev_ioctl(struct cdev *cdev, u_long cmd, caddr_t data, int fflag,
 		break;
 	case VM_ASSERT_IRQ:
 		vi =(struct vm_irq *)data;
-		error = vm_assert_irq(sc->vm, vi->irq);
+		error = vm_assert_irq(sc->vm, vi->irq, vi->vcpuid);
 		break;
 	case VM_DEASSERT_IRQ:
 		vi = (struct vm_irq *)data;

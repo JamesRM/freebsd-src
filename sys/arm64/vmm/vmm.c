@@ -863,13 +863,13 @@ vm_attach_vgic(struct vm *vm, uint64_t dist_start, size_t dist_size,
 }
 
 int
-vm_assert_irq(struct vm *vm, uint32_t irq)
+vm_assert_irq(struct vm *vm, uint32_t irq, uint32_t vcpuid)
 {
 	struct hyp *hyp = (struct hyp *)vm->cookie;
 	int error;
 
 	/* TODO: this is crap, send the vcpuid as an argument to vm_assert_irq */
-	error = vgic_v3_inject_irq(&hyp->ctx[0], irq, VGIC_IRQ_VIRTIO);
+	error = vgic_v3_inject_irq(&hyp->ctx[vcpuid], irq, VGIC_IRQ_VIRTIO);
 
 	return (error);
 }

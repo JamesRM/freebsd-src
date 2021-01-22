@@ -370,12 +370,13 @@ vm_attach_vgic(struct vmctx *ctx, uint64_t dist_start, size_t dist_size,
 }
 
 int
-vm_assert_irq(struct vmctx *ctx, uint32_t irq)
+vm_assert_irq(struct vmctx *ctx, uint32_t irq, uint32_t vcpuid)
 {
 	struct vm_irq vi;
 
 	bzero(&vi, sizeof(vi));
 	vi.irq = irq;
+	vi.vcpuid = vcpuid;
 
 	return (ioctl(ctx->fd, VM_ASSERT_IRQ, &vi));
 }

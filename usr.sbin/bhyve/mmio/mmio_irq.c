@@ -73,7 +73,7 @@ mmio_irq_assert(struct mmio_devinst *di)
 	mmio_set_cfgreg32(di, VIRTIO_MMIO_INTERRUPT_STATUS, irq_status);
 
 	if (irq->active_count == 1)
-		vm_assert_irq(di->pi_vmctx, di->di_lintr.irq);
+		vm_assert_irq(di->pi_vmctx, di->di_lintr.irq, 0);
 
 	pthread_mutex_unlock(&di->di_lintr.lock);
 

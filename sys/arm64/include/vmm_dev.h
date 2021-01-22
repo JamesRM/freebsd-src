@@ -104,6 +104,7 @@ struct vm_attach_vgic {
 
 struct vm_irq {
 	uint32_t irq;
+	uint32_t vcpuid;
 };
 
 #define	VM_ACTIVE_CPUS		0
