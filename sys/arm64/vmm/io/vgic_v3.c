@@ -69,7 +69,7 @@
 
 #define	RES0			0UL
 
-#define	IRQBUF_SIZE_MIN		64
+#define	IRQBUF_SIZE_MIN		32
 #define	IRQBUF_SIZE_MAX		(1 << 10)
 
 #define	IRQ_SCHEDULED		(GIC_LAST_SPI + 1)
@@ -469,15 +469,45 @@ vgic_v3_inject_irq(void *arg, uint32_t irq, enum vgic_v3_irqtype irqtype)
         struct hypctx *hypctx = arg;
 	struct vgic_v3_dist *dist = &hypctx->hyp->vgic_dist;
 	struct vgic_v3_cpu_if *cpu_if = &hypctx->vgic_cpu_if;
+	struct vgic_v3_irq *new_irqbuf, *old_irqbuf;
 	struct vgic_v3_irq *vip;
 	int error;
 	int i;
+	size_t new_size;
 	uint8_t priority;
 	bool enabled;
 
 	if (irq >= dist->nirqs || irqtype >= VGIC_IRQ_INVALID) {
 		eprintf("Malformed IRQ %u.\n", irq);
 		return (1);
+	}
+
+	/*
+	 * TODO: Not sure if this will be reached by ONE thread at a time
+	 * It can interfere with timer interrupts.
+	 */
+	if (cpu_if->irqbuf_num == cpu_if->irqbuf_size &&
+	    irqtype != VGIC_IRQ_CLK) {
+		/* Double the size of the buffered interrupts list */
+		new_size = cpu_if->irqbuf_size << 1;
+		printf("\t\tDEBG: Double size: %zu\n", new_size);
+		if (new_size > IRQBUF_SIZE_MAX) {
+			eprintf("Error adding IRQ %u to the IRQ buffer.\n", irq);
+			error = 1;
+			goto out;
+		}
+
+		new_irqbuf = NULL;
+		while (new_irqbuf == NULL)
+			new_irqbuf = malloc(new_size * sizeof(*cpu_if->irqbuf),
+			    M_VGIC_V3, M_NOWAIT | M_ZERO);
+		memcpy(new_irqbuf, cpu_if->irqbuf,
+		    cpu_if->irqbuf_size * sizeof(*cpu_if->irqbuf));
+
+		old_irqbuf = cpu_if->irqbuf;
+		cpu_if->irqbuf = new_irqbuf;
+		cpu_if->irqbuf_size = new_size;
+		free(old_irqbuf, M_VGIC_V3);
 	}
 
 	error = 0;
@@ -508,12 +538,9 @@ vgic_v3_inject_irq(void *arg, uint32_t irq, enum vgic_v3_irqtype irqtype)
 				goto out;
 	}
 
-	vip = vgic_v3_irqbuf_add_nolock(cpu_if);
-	if (!vip) {
-		eprintf("Error adding IRQ %u to the IRQ buffer.\n", irq);
-		error = 1;
-		goto out;
-	}
+	cpu_if->irqbuf_num++;
+	vip = &cpu_if->irqbuf[cpu_if->irqbuf_num - 1];
+
 	vip->irq = irq;
 	vip->irqtype = irqtype;
 	vip->enabled = enabled;
