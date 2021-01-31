@@ -50,8 +50,8 @@ struct arm_gic_softc {
 	bool			is_root;
 	void *			gic_intrhand;
 	struct gic_irqsrc *	gic_irqs;
-#define	GIC_RES_DIST		0
-#define	GIC_RES_CPU		1
+#define GIC_RES_DIST		0
+#define GIC_RES_CPU		1
 	struct resource *	gic_res[6];
 	bus_space_tag_t		gic_c_bst;
 	bus_space_tag_t		gic_d_bst;
