@@ -1,7 +1,10 @@
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
- * Copyright (c) 2018 Alexandru Elisei <alexandru.elisei@gmail.com>
+ * Copyright (C) 2015-2021 Mihai Carabas <mihai.carabas@gmail.com>
+ * Copyright (C) 2017-2019 Alexandru Elisei <alexandru.elisei@gmail.com>
+ * Copyright (C) 2017-2021 Darius Mihai <darius.mihai.m@gmail.com>
+ * Copyright (C) 2019-2021 Andrei Martin <andrei.cos.martin@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
