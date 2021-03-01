@@ -136,6 +136,7 @@ cninit(void)
 	 * Check if we should mute the console (for security reasons perhaps)
 	 * It can be changes dynamically using sysctl kern.consmute
 	 * once we are up and going.
+	 * 
 	 */
         cn_mute = ((boothowto & (RB_MUTE
 			|RB_SINGLE
@@ -173,7 +174,6 @@ cninit(void)
 			cnadd(cn);
 		}
 	}
-
 	if (best_cn == NULL)
 		return;
 	if ((boothowto & RB_MULTIPLE) == 0) {
