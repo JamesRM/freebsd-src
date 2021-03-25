@@ -879,9 +879,10 @@ vm_assert_irq(struct vm *vm, uint32_t irq, uint32_t vcpuid)
 int
 vm_deassert_irq(struct vm *vm, uint32_t irq)
 {
+	struct hyp *hyp = (struct hyp *)vm->cookie;
 	int error;
 
-	error = vgic_v3_remove_irq(vm->cookie, irq, false);
+	error = vgic_v3_remove_irq(&hyp->ctx[0], irq, false);
 
 	return (error);
 }
