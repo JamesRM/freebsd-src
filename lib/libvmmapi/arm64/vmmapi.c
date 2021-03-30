@@ -382,12 +382,13 @@ vm_assert_irq(struct vmctx *ctx, uint32_t irq, uint32_t vcpuid)
 }
 
 int
-vm_deassert_irq(struct vmctx *ctx, uint32_t irq)
+vm_deassert_irq(struct vmctx *ctx, uint32_t irq, uint32_t vcpuid)
 {
 	struct vm_irq vi;
 
 	bzero(&vi, sizeof(vi));
 	vi.irq = irq;
+	vi.vcpuid = vcpuid;
 
 	return (ioctl(ctx->fd, VM_DEASSERT_IRQ, &vi));
 }
