@@ -207,9 +207,11 @@ static void
 usage(int code)
 {
 	fprintf(stderr,
-	    "Usage: %s [-h] [-k <kernel-image>] [-e <name=value>] [-b base-address]\n"
+	    "Usage: %s [-h] [-k <kernel-image>] [-d dtb-offset] [-t <dtb-file>] [-e <name=value>] [-b base-address]\n"
 	    "       %*s [-m mem-size] [-l load-address] <vmname>\n"
 	    "       -k: path to guest kernel image\n"
+	    "       -d: where to load the device tree, an offset from the start of the kernel address\n"
+	    "       -t: path to guest device tree file\n"
 	    "       -e: guest boot environment\n"
 	    "       -b: memory base address\n"
 	    "       -m: memory size\n"
