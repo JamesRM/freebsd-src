@@ -48,6 +48,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sysexits.h>
 #include <termios.h>
@@ -66,7 +67,7 @@
 
 #define	MB			(1024 * 1024UL)
 #define	BSP			0
-#define	KERNEL_IMAGE_NAME_LEN	32
+#define	KERNEL_IMAGE_NAME_LEN	256
 
 #define	GIC_V3_DIST_START	0x2f000000UL
 #define	GIC_V3_DIST_SIZE	0x10000UL
@@ -224,13 +225,17 @@ main(int argc, char** argv)
 	struct vm_bootparams bootparams;
 	uint64_t mem_size;
 	int opt, error;
-	int kernel_image_fd;
+	int kernel_image_fd, dtb_fd;
 	uint64_t periphbase;
 	char kernel_image_name[KERNEL_IMAGE_NAME_LEN];
-	struct stat st;
-	void *addr;
+	char device_tree_name[KERNEL_IMAGE_NAME_LEN];
+	struct stat st, dtb_st;
+	void *addr, *dtb_addr;
 	char *envstr;
 	int envlen;
+	uint64_t dtb_address = 0x0;
+	bool dtb_address_is_offset = false;
+	bool use_dtb_file = false;
 
 	progname = basename(argv[0]);
 
@@ -241,8 +246,16 @@ main(int argc, char** argv)
 	strncpy(kernel_image_name, "kernel.bin", KERNEL_IMAGE_NAME_LEN);
 	memset(&bootparams, 0, sizeof(struct vm_bootparams));
 
-	while ((opt = getopt(argc, argv, "hk:l:b:m:e:")) != -1) {
+	while ((opt = getopt(argc, argv, "hk:l:b:m:e:d:t:")) != -1) {
 		switch (opt) {
+		case 't':
+			strncpy(device_tree_name, optarg, KERNEL_IMAGE_NAME_LEN);
+			use_dtb_file = true;
+			break;
+		case 'd':
+			dtb_address = strtoul(optarg, NULL, 0);
+			dtb_address_is_offset = true;
+			break;
 		case 'k':
 			strncpy(kernel_image_name, optarg, KERNEL_IMAGE_NAME_LEN);
 			break;
@@ -353,6 +366,38 @@ main(int argc, char** argv)
 		exit(1);
 	}
 
+	if (dtb_address == 0)
+		dtb_address = kernel_load_address + st.st_size;
+	else if (dtb_address_is_offset)
+		dtb_address += kernel_load_address;
+
+	if (use_dtb_file) {
+		dtb_fd = open(device_tree_name, O_RDONLY);
+		if (dtb_fd == -1) {
+			perror("open device_tree_name");
+			exit(1);
+		}
+
+		error = fstat(dtb_fd, &dtb_st);
+		if (error) {
+			perror("fstat");
+			exit(1);
+		}
+
+		dtb_addr = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, dtb_fd, 0);
+		if (dtb_addr == MAP_FAILED) {
+			perror("mmap dtb_fd");
+			exit(1);
+		}
+
+		if (guest_copyin(dtb_addr, dtb_address, dtb_st.st_size) != 0) {
+			perror("guest_copyin");
+			exit(1);
+		}
+		bootparams.modulep = dtb_addr;
+		bootparams.module_len = dtb_st.st_size;
+	}
+
 	/*
 	fprintf(stderr, "bootparams.envp_gva = 0x%016lx\n", bootparams.envp_gva);
 	fprintf(stderr, "gvatom(bootparams.envp_gva) = 0x%016lx\n", gvatovm(bootparams.envp_gva));
@@ -399,6 +444,8 @@ main(int argc, char** argv)
 	}
 
 	munmap(addr, st.st_size);
+	if (use_dtb_file)
+		munmap(dtb_addr, dtb_st.st_size);
 
 	guest_setreg(VM_REG_ELR_EL2, kernel_load_address + bootparams.entry_off);
 	guest_setreg(VM_REG_GUEST_X0, bootparams.modulep_gva);
