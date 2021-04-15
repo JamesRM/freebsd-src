@@ -449,6 +449,10 @@ main(int argc, char** argv)
 	if (use_dtb_file)
 		munmap(dtb_addr, dtb_st.st_size);
 
+	/*  TODO: If we want to boot Linux, this entry_off should be not fine
+	 *  bootparams.entry_off = 0x80000;
+	 *  Based on the Linux ARM64/boot documentation
+	 */
 	guest_setreg(VM_REG_ELR_EL2, kernel_load_address + bootparams.entry_off);
 	guest_setreg(VM_REG_GUEST_X0, bootparams.modulep_gva);
 
