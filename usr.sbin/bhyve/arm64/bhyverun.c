@@ -73,6 +73,7 @@
 #define GB		(1024UL * MB)
 
 typedef int (*vmexit_handler_t)(struct vmctx *, struct vm_exit *, int *vcpu);
+void init_uart(struct vmctx *);
 
 char *vmname;
 
@@ -111,7 +112,6 @@ usage(int code)
         fprintf(stderr,
                 "Usage: %s [-bh] [-c vcpus] [-p pincpu] [-s <devemu>] "
 		"<vmname>\n"
-		"       -b: use bvmconsole\n"
 		"       -c: # cpus (default 1)\n"
 		"       -p: pin vcpu 'n' to host cpu 'pincpu + n'\n"
 		"       -s: device emulation config\n"
@@ -403,13 +403,11 @@ int
 main(int argc, char *argv[])
 {
 	int c, error;
-	bool bvmcons;
 	int max_vcpus;
 	struct vmctx *ctx;
 	uint64_t pc;
 	uint64_t memory_base_address, mem_size;
 
-	bvmcons = false;
 	memory_base_address = VM_GUEST_BASE_IPA;
 	mem_size = 128 * MB;
 	progname = basename(argv[0]);
@@ -417,9 +415,6 @@ main(int argc, char *argv[])
 
 	while ((c = getopt(argc, argv, "bhcp:s:e:m:")) != -1) {
 		switch (c) {
-		case 'b':
-			bvmcons = true;
-			break;
 		case 'e':
 			memory_base_address = strtoul(optarg, NULL, 0);
 			break;
@@ -485,8 +480,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (bvmcons)
-		init_bvmcons();
+	init_uart(ctx);
 
 	error = vm_get_register(ctx, BSP, VM_REG_ELR_EL2, &pc);
 	assert(error == 0);
