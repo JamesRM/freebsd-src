@@ -71,7 +71,7 @@
  */
 #define	GICD_IROUTER_BASE	(0x6000)
 #define	 GICD_IROUTER(n)	(GICD_IROUTER_BASE + ((n) * 8))
-#define	 GICD_IROUTER_IRM	(31)
+#define	 GICD_IROUTER_IRM	(1 << 31)
 
 #define	GICD_PIDR4		0xFFD0
 #define	GICD_PIDR5		0xFFD4
