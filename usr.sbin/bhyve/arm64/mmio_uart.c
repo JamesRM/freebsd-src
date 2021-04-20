@@ -33,7 +33,7 @@ mmio_uart_intr_deassert(void *arg)
 {
 	struct vmctx *ctx = arg;
 
-	vm_deassert_irq(ctx, 37);
+	vm_deassert_irq(ctx, 37, 0);
 }
 
 static int
