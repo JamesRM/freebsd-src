@@ -36,7 +36,7 @@ __FBSDID("$FreeBSD$");
 #include <stdio.h>
 #include <string.h>
 
-#include "bhyverun.h"
+#include "../arm64/bhyverun.h"
 #include "debug.h"
 #include "net_utils.h"
 

@@ -14,10 +14,8 @@ BHYVE_SYSDIR?=${SRCTOP}
 BHYVE_SRCTOP?=${.CURDIR}
 
 SRCS=	\
-	block_if.c		\
 	iov.c			\
 	mevent.c		\
-	net_backends.c		\
 	sockstream.c
 
 CFLAGS+=	-DWITHOUT_CAPSICUM
