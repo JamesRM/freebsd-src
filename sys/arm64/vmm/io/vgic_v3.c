@@ -493,7 +493,6 @@ vgic_v3_inject_irq(void *arg, uint32_t irq, enum vgic_v3_irqtype irqtype)
 	    irqtype != VGIC_IRQ_CLK) {
 		/* Double the size of the buffered interrupts list */
 		new_size = cpu_if->irqbuf_size << 1;
-		printf("\t\tDEBG: Double size: %zu\n", new_size);
 		if (new_size > IRQBUF_SIZE_MAX) {
 			eprintf("Error adding IRQ %u to the IRQ buffer.\n", irq);
 			error = 1;
