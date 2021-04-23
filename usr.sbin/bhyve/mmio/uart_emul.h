@@ -31,12 +31,31 @@
 #ifndef _UART_EMUL_H_
 #define	_UART_EMUL_H_
 
-#define	UART_IO_BAR_SIZE	8
+typedef void (*uart_intr_func_t)(void *arg, uint32_t irq);
 
-struct uart_softc;
-struct vm_snapshot_meta;
+struct uart_softc {
+	struct uart_backend *backend;
+	pthread_mutex_t mtx;	/* protects all softc elements */
 
-typedef void (*uart_intr_func_t)(void *arg);
+	uint16_t	irq_state;
+
+	uint16_t	rsr;
+
+	uint16_t	cr;
+	uint16_t	ifls;
+	uint16_t	imsc;
+	uint16_t	lcr_h;
+
+	uint16_t	ibrd;
+	uint16_t	fbrd;
+
+	void	*arg;
+	uint32_t irqno;
+	uart_intr_func_t intr_assert;
+	uart_intr_func_t intr_deassert;
+};
+
+
 struct uart_softc *uart_init(uart_intr_func_t intr_assert,
 		uart_intr_func_t intr_deassert, void *arg);
 

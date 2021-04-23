@@ -109,27 +109,6 @@ __FBSDID("$FreeBSD$");
 #define	UARTPCellID3		0x3ff
 #define	UARTPCellID3_VAL	(((UARTPCellID) >> 24) & 0xff)
 
-struct uart_softc {
-	struct uart_backend *backend;
-	pthread_mutex_t mtx;	/* protects all softc elements */
-
-	uint16_t	irq_state;
-
-	uint16_t	rsr;
-
-	uint16_t	cr;
-	uint16_t	ifls;
-	uint16_t	imsc;
-	uint16_t	lcr_h;
-
-	uint16_t	ibrd;
-	uint16_t	fbrd;
-
-	void	*arg;
-	uart_intr_func_t intr_assert;
-	uart_intr_func_t intr_deassert;
-};
-
 static void
 uart_reset(struct uart_softc *sc)
 {
@@ -170,9 +149,9 @@ static void
 uart_toggle_intr(struct uart_softc *sc)
 {
 	if ((sc->irq_state & sc->imsc) == 0)
-		(*sc->intr_deassert)(sc->arg);
+		(*sc->intr_deassert)(sc->arg, sc->irqno);
 	else
-		(*sc->intr_assert)(sc->arg);
+		(*sc->intr_assert)(sc->arg, sc->irqno);
 }
 
 static void

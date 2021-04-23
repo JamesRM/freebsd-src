@@ -73,7 +73,6 @@
 #define GB		(1024UL * MB)
 
 typedef int (*vmexit_handler_t)(struct vmctx *, struct vm_exit *, int *vcpu);
-void init_uart(struct vmctx *);
 
 char *vmname;
 
@@ -479,8 +478,6 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Failed to initialize device emulation\n");
 		exit(1);
 	}
-
-	init_uart(ctx);
 
 	error = vm_get_register(ctx, BSP, VM_REG_ELR_EL2, &pc);
 	assert(error == 0);
