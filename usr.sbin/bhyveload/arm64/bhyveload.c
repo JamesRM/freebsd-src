@@ -396,7 +396,17 @@ main(int argc, char** argv)
 			perror("guest_copyin");
 			exit(1);
 		}
-		bootparams.modulep = dtb_addr;
+
+		free(bootparams.modulep);
+
+		bootparams.modulep = calloc(1, dtb_st.st_size);
+		if (bootparams.modulep == NULL) {
+			perror("calloc");
+			return (ENOMEM);
+		}
+
+		memcpy(bootparams.modulep, dtb_addr, dtb_st.st_size);
+
 		bootparams.module_len = dtb_st.st_size;
 	}
 
