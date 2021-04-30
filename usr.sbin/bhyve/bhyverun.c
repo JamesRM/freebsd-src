@@ -1085,7 +1085,7 @@ is_valid_uuid(const char* uuid_str)
 	uint32_t uuid_status;
 
 	uuid_from_string(uuid_str, &uuid, &uuid_status);
-	return  uuid_status == uuid_s_ok;
+	return (uuid_status == uuid_s_ok);
 }
 
 int
@@ -1207,7 +1207,7 @@ main(int argc, char *argv[])
 			rtc_localtime = 0;
 			break;
 		case 'U':
-			if (is_valid_uuid(optarg) == false) {
+			if (! is_valid_uuid(optarg)) {
 				errx(EX_USAGE, "invalid UUID '%s'", optarg);
 			}
 			guest_uuid_str = optarg;
