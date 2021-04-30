@@ -341,7 +341,6 @@ main(int argc, char *argv[])
 					continue;
 				options = update_options(options, fs->fs_mntops,
 				    mntbuf->f_flags);
-					printf("mount 1");
 				if (mountfs(fs->fs_vfstype, fs->fs_spec,
 				    fs->fs_file, init_flags, options,
 				    fs->fs_mntops) && !failok)
@@ -406,7 +405,6 @@ main(int argc, char *argv[])
 				options = update_options(options, NULL,
 				    mntbuf->f_flags);
 			}
-			printf("mount 2");
 			rval = mountfs(mntbuf->f_fstypename, mntfromname,
 			    mntbuf->f_mntonname, init_flags, options, 0);
 			break;
@@ -418,13 +416,12 @@ main(int argc, char *argv[])
 		if (BADTYPE(fs->fs_type))
 			errx(1, "%s has unknown file system type",
 			    *argv);
-				printf("mount 3");
 		rval = mountfs(fs->fs_vfstype, fs->fs_spec, fs->fs_file,
 		    init_flags, options, fs->fs_mntops);
 		break;
 	case 2:
 		/* If -t flag has not been specified, ask fstype what kind
-	     * of filesystem it thinks this is.
+		 * of filesystem it thinks this is.
 		 */
 
 		if (vfslist == NULL)
@@ -588,11 +585,6 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 	 */
 	if (flags & MNT_UPDATE)
 		optbuf = catopt(optbuf, "update");
-
-	if (vfstype == NULL)
-	{
-		printf("Infer filetype %s\n", vfstype);
-	}
 
 	/* Compatibility glue. */
 	if (strcmp(vfstype, "msdos") == 0)
