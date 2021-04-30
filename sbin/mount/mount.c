@@ -427,10 +427,9 @@ main(int argc, char *argv[])
 	     * of filesystem it thinks this is.
 		 */
 
-		if (vfslist== NULL) {
-			printf("Shell out to fstyp\n");
-			
-		}
+		if (vfslist == NULL)
+			infer_fs_type(argv[0], &vfstype);
+		
 
 		/*
 		 * If -t flag has not been specified, the path cannot be
@@ -457,7 +456,7 @@ main(int argc, char *argv[])
 			if (cp == ep)
 				vfstype = "nfs";
 		}
-		printf("mount 4");
+
 		rval = mountfs(vfstype,
 		    argv[0], argv[1], init_flags, options, NULL);
 		break;
@@ -592,7 +591,7 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 
 	if (vfstype == NULL)
 	{
-		printf("Infer filetype\n");
+		printf("Infer filetype %s\n", vfstype);
 	}
 
 	/* Compatibility glue. */

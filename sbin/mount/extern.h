@@ -32,4 +32,6 @@
 int checkvfsname(const char *, const char **);
 const char **makevfslist(char *);
 
+void infer_fs_type(const char* path, const char** result);
+
 int mount_fs(const char *, int, char *[]);
