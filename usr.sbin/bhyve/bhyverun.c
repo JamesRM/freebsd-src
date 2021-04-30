@@ -1210,7 +1210,7 @@ main(int argc, char *argv[])
 			if (is_valid_uuid(optarg) == false) {
 				errx(EX_USAGE, "invalid UUID '%s'", optarg);
 			}
-			guest_uuid_str = optarg;	
+			guest_uuid_str = optarg;
 			break;
 		case 'w':
 			strictmsr = 0;
