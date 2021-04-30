@@ -423,11 +423,9 @@ main(int argc, char *argv[])
 		/* If -t flag has not been specified, ask fstype what kind
 		 * of filesystem it thinks this is.
 		 */
-
 		if (vfslist == NULL)
 			infer_fs_type(argv[0], &vfstype);
 		
-
 		/*
 		 * If -t flag has not been specified, the path cannot be
 		 * found, spec contains either a ':' or a '@', then assume
@@ -453,7 +451,6 @@ main(int argc, char *argv[])
 			if (cp == ep)
 				vfstype = "nfs";
 		}
-
 		rval = mountfs(vfstype,
 		    argv[0], argv[1], init_flags, options, NULL);
 		break;
