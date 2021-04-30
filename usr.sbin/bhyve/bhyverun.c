@@ -69,6 +69,7 @@ __FBSDID("$FreeBSD$");
 #include <sysexits.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <uuid.h>
 #ifdef BHYVE_SNAPSHOT
 #include <ucl.h>
 #include <unistd.h>
@@ -1077,6 +1078,16 @@ spinup_vcpu(struct vmctx *ctx, int vcpu)
 	fbsdrun_addcpu(ctx, BSP, vcpu, rip);
 }
 
+bool 
+is_valid_uuid(const char* uuid_str)
+{
+	uuid_t uuid;
+	uint32_t uuid_status;
+
+	uuid_from_string(uuid_str, &uuid, &uuid_status);
+	return  uuid_status == uuid_s_ok;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1196,7 +1207,10 @@ main(int argc, char *argv[])
 			rtc_localtime = 0;
 			break;
 		case 'U':
-			guest_uuid_str = optarg;
+			if (is_valid_uuid(optarg) == false) {
+				errx(EX_USAGE, "invalid UUID '%s'", optarg);
+			}
+			guest_uuid_str = optarg;	
 			break;
 		case 'w':
 			strictmsr = 0;
@@ -1373,6 +1387,8 @@ main(int argc, char *argv[])
 	}
 
 	error = smbios_build(ctx);
+
+	//TODO: Add some error messaging here
 	assert(error == 0);
 
 	if (acpi) {
