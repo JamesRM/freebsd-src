@@ -1387,8 +1387,6 @@ main(int argc, char *argv[])
 	}
 
 	error = smbios_build(ctx);
-
-	//TODO: Add some error messaging here
 	assert(error == 0);
 
 	if (acpi) {
