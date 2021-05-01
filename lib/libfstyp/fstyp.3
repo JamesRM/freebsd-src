@@ -1,0 +1,136 @@
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+.\"
+.\" Copyright (c) 2021 James Mintram <me@jamesrm.com>
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD$
+.\"
+.Dd May 1, 2021
+.Dt LIBFSTYP 3
+.Os
+.Sh NAME
+.Nm libfstyp
+.Nd 
+library for determining the filesystem type on a given device. 
+It can recognize ISO-9660, exFAT, Ext2, FAT, NTFS, and UFS filesystems.
+.Sh LIBRARY
+.Lb libfstyp
+.Sh SYNOPSIS
+.In libfstyp.h
+.Ft int Ns
+.Fn fstypef "FILE *file" "char *label" "size_t label_len" "bool show_unmountable" "const struct fstype **result"
+.Pp
+.Ft void Ns
+.Fn enable_encodings
+.Pp
+.Sh DESCRIPTION
+.Nm
+interfaces with libzfs to provide a set of functions for various operations
+regarding ZFS boot environments including "deep" boot environments in which
+a boot environments has child datasets.
+.Pp
+A context structure is passed to each function, allowing for a small amount
+of state to be retained, such as errors from previous operations.
+.Nm
+may be configured to print the corresponding error message to
+.Dv stderr
+when an error is encountered with
+.Fn libbe_print_on_error .
+.Pp
+All functions returning an
+.Vt int
+return 0 on success, or a
+.Nm
+errno otherwise as described in
+.Sx DIAGNOSTICS .
+.Pp
+The
+.Fn libbe_init
+function takes an optional BE root and initializes
+.Nm ,
+returning a
+.Vt "libbe_handle_t *"
+on success, or
+.Dv NULL
+on error.
+If a BE root is supplied,
+.Nm
+will only operate out of that pool and BE root.
+An error may occur if:
+.Bl -column
+.It /boot and / are not on the same filesystem and device,
+.It libzfs fails to initialize,
+.It The system has not been properly booted with a ZFS boot
+environment,
+.It Nm
+fails to open the zpool the active boot environment resides on, or
+.It Nm
+fails to locate the boot environment that is currently mounted.
+.El
+.Pp
+The
+.Fn libbe_close
+function frees all resources previously acquired in
+.Fn libbe_init ,
+invalidating the handle in the process.
+.Pp
+The
+.Fn be_active_name
+function returns the name of the currently booted boot environment.
+This boot environment may not belong to the same BE root as the root libbe
+is operating on!
+.Pp
+The
+.Fn be_active_path
+function returns the full path of the currently booted boot environment.
+This boot environment may not belong to the same BE root as the root libbe
+is operating on!
+.Pp
+The
+.Fn be_nextboot_name
+function returns the name of the boot environment that will be active on reboot.
+.Pp
+The
+.Fn be_nextboot_path
+function returns the full path of the boot environment that will be
+active on reboot.
+.Sh SEE ALSO
+.Xr fstyp 8
+.Sh HISTORY
+.Nm
+was factored out from 
+.Xr fstyp 8
+in 2021 by
+.An James Mintram Aq Mt me@JamesRM.com
+.Sh AUTHORS
+.An -nosplit
+.Xr fstyp 8 was developed by
+.An James Mintram Aq Mt me@JamesRM.com
+The original
+.Xr fstyp 8
+utility was developed by
+.An Edward Tomasz Napierala Aq Mt trasz@FreeBSD.org
+under sponsorship from the FreeBSD Foundation.
+ZFS and GELI support was added by
+.An Allan Jude Aq Mt allanjude@FreeBSD.org .
