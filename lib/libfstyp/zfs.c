@@ -39,6 +39,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/vdev_impl.h>
 
 #include "fstyp.h"
+#include "fstyp_p.h"
 
 int
 fstyp_zfs(FILE *fp, char *label, size_t labelsize)

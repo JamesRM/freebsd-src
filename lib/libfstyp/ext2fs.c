@@ -1,5 +1,7 @@
 /*-
+ * Copyright (c) 2005 Stanislav Sedov
  * Copyright (c) 2014 The FreeBSD Foundation
+ * All rights reserved.
  *
  * This software was developed by Edward Tomasz Napierala under sponsorship
  * from the FreeBSD Foundation.
@@ -24,44 +26,61 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $FreeBSD$
  */
 
-#ifndef FSTYP_H
-#define	FSTYP_H
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD$");
 
-#include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define	MIN(a,b) (((a)<(b))?(a):(b))
+#include "fstyp.h"
+#include "fstyp_p.h"
 
-/* The spec doesn't seem to permit UTF-16 surrogates; definitely LE. */
-#define	EXFAT_ENC	"UCS-2LE"
-/*
- * NTFS itself is agnostic to encoding; it just stores 255 u16 wchars.  In
- * practice, UTF-16 seems expected for NTFS.  (Maybe also for exFAT.)
- */
-#define	NTFS_ENC	"UTF-16LE"
+#define EXT2FS_SB_OFFSET	1024
+#define EXT2_SUPER_MAGIC	0xef53
+#define EXT2_DYNAMIC_REV	1
 
-extern bool	show_label;	/* -l flag */
+typedef struct e2sb {
+	uint8_t		fake1[56];
+	uint16_t	s_magic;
+	uint8_t		fake2[18];
+	uint32_t	s_rev_level;
+	uint8_t		fake3[40];
+	char		s_volume_name[16];
+} e2sb_t;
 
-void	*read_buf(FILE *fp, off_t off, size_t len);
-char	*checked_strdup(const char *s);
-void	rtrim(char *label, size_t size);
+int
+fstyp_ext2fs(FILE *fp, char *label, size_t size)
+{
+	e2sb_t *fs;
+	char *s_volume_name;
 
-int	fstyp_apfs(FILE *fp, char *label, size_t size);
-int	fstyp_cd9660(FILE *fp, char *label, size_t size);
-int	fstyp_exfat(FILE *fp, char *label, size_t size);
-int	fstyp_ext2fs(FILE *fp, char *label, size_t size);
-int	fstyp_geli(FILE *fp, char *label, size_t size);
-int	fstyp_hammer(FILE *fp, char *label, size_t size);
-int	fstyp_hammer2(FILE *fp, char *label, size_t size);
-int	fstyp_hfsp(FILE *fp, char *label, size_t size);
-int	fstyp_msdosfs(FILE *fp, char *label, size_t size);
-int	fstyp_ntfs(FILE *fp, char *label, size_t size);
-int	fstyp_ufs(FILE *fp, char *label, size_t size);
-#ifdef HAVE_ZFS
-int	fstyp_zfs(FILE *fp, char *label, size_t size);
-#endif
+	fs = (e2sb_t *)read_buf(fp, EXT2FS_SB_OFFSET, 512);
+	if (fs == NULL)
+		return (1);
 
-#endif /* !FSTYP_H */
+	/* Check for magic and versio n*/
+	if (fs->s_magic == EXT2_SUPER_MAGIC &&
+	    fs->s_rev_level == EXT2_DYNAMIC_REV) {
+		//G_LABEL_DEBUG(1, "ext2fs file system detected on %s.",
+		//    pp->name);
+	} else {
+		free(fs);
+		return (1);
+	}
+
+	s_volume_name = fs->s_volume_name;
+	/* Terminate label */
+	s_volume_name[sizeof(fs->s_volume_name) - 1] = '\0';
+
+	if (s_volume_name[0] == '/')
+		s_volume_name += 1;
+
+	strlcpy(label, s_volume_name, size);
+	free(fs);
+
+	return (0);
+}
