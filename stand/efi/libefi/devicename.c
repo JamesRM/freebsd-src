@@ -90,7 +90,7 @@ efi_parsedev(struct devdesc **dev, const char *devspec, const char **path)
 	const char *np;
 
 	/* minimum length check */
-	if (strlen(devspec) < 2)
+	if (!devspec || strlen(devspec) < 2)
 		return (EINVAL);
 
 	/* look for a device that matches */
