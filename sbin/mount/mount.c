@@ -420,6 +420,12 @@ main(int argc, char *argv[])
 		    init_flags, options, fs->fs_mntops);
 		break;
 	case 2:
+		/* If -t flag has not been specified, ask fstype what kind
+		 * of filesystem it thinks this is.
+		 */
+		if (vfslist == NULL)
+			infer_fs_type(argv[0], &vfstype);
+		
 		/*
 		 * If -t flag has not been specified, the path cannot be
 		 * found, spec contains either a ':' or a '@', then assume

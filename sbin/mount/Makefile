@@ -3,7 +3,7 @@
 
 PACKAGE=runtime
 PROG=	mount
-SRCS=	mount.c mount_fs.c getmntopts.c vfslist.c
+SRCS=	mount.c mount_fs.c getmntopts.c vfslist.c inferfs.c
 MAN=	mount.8
 # We do NOT install the getmntopts.3 man page.
 
